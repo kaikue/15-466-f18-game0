@@ -85,6 +85,8 @@ for name in to_write:
 			print("WARNING: trying to export texcoord data, but object '" + name + "' does not uv data; will output (0.0, 0.0)")
 		else:
 			uvs = obj.data.uv_layers.active.data
+	
+	vcols = mesh.vertex_colors.active.data
 
 	#write the mesh:
 	for poly in mesh.polygons:
@@ -97,9 +99,9 @@ for name in to_write:
 				data += struct.pack('f', x)
 			for x in loop.normal:
 				data += struct.pack('f', x)
-			#TODO: set 'col' based on object's active vertex colors array.
-			# you should be able to use code much like the texcoord code below.
-			col = mathutils.Color((1.0, 1.0, 1.0))
+			#set 'col' based on object's active vertex colors array
+			#thanks to https://blender.stackexchange.com/questions/8560/apply-vertex-paint-to-a-vertex
+			col = vcols[poly.loop_indices[i]].color
 			data += struct.pack('BBBB', int(col.r * 255), int(col.g * 255), int(col.b * 255), 255)
 
 			if do_texcoord:
