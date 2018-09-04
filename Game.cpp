@@ -11,6 +11,7 @@
 #include <map>
 #include <cstddef>
 #include <random>
+#include <time.h>
 
 //helper defined later; throws if shader compilation fails:
 static GLuint compile_shader(GLenum type, std::string const &source);
@@ -213,7 +214,7 @@ Game::Game() {
 		board_rotations.emplace_back(glm::quat());
 	}*/
 
-  mt = std::mt19937(0x12345678);
+  mt = std::mt19937((unsigned int)time(0));
   generate_level();
 }
 
@@ -451,7 +452,10 @@ void Game::generate_level() {
         gen_player_pos = move_by(gen_player_pos, -move_facing.x, -move_facing.y);
         gen_facing = move_facing;
       }
+
+      printf("%d %d\n", gen_player_pos.x, gen_player_pos.y);
     }
+
   }
 
   //move goblins in reverse order they were created to ensure consistency (in known solution, first created = last killed)
