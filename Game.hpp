@@ -37,6 +37,10 @@ struct Game {
 
   void check_goblin_collisions();
 
+  void move_goblins();
+
+  bool space_free(glm::uint x, glm::uint y);
+
   void restart();
 
   bool check_win();
@@ -79,16 +83,23 @@ struct Game {
 	Mesh egg_mesh;
 	Mesh cube_mesh;
 
+  Mesh player_mesh;
+  Mesh goblin_mesh;
+  Mesh bg_mesh;
+
 	GLuint meshes_for_simple_shading_vao = -1U; //vertex array object that describes how to connect the meshes_vbo to the simple_shading_program
 
 	//------- game state -------
 
-	glm::uvec2 board_size = glm::uvec2(5,4);
+	glm::uvec2 board_size = glm::uvec2(6,6);
 	std::vector< Mesh const * > board_meshes;
 	std::vector< glm::quat > board_rotations;
 
-	glm::uvec2 player_pos = glm::vec2(0,0);
+	glm::uvec2 player_pos = glm::vec2(0, 0);
   glm::uvec2 player_facing = glm::vec2(1, 0);
   glm::uvec2 player_start_pos = glm::vec2(0, 0);
   glm::uvec2 player_start_facing = glm::vec2(1, 0);
+
+  std::vector< glm::uvec2 > goblin_positions;
+  std::vector< glm::uvec2 > goblin_start_positions;
 };

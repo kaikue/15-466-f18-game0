@@ -178,6 +178,11 @@ Game::Game() {
 		doll_mesh = lookup("Doll");
 		egg_mesh = lookup("Egg");
 		cube_mesh = lookup("Cube");
+
+    //TODO
+    bg_mesh = lookup("Tile");
+    player_mesh = lookup("Doll");
+    goblin_mesh = lookup("Egg");
 	}
 
 	{ //create vertex array object to hold the map from the mesh vertex buffer to shader program attributes:
@@ -277,16 +282,14 @@ void Game::move(int x, int y) {
   player_facing.x = x;
   player_facing.y = y;
 
-  player_pos.x += x;
-  player_pos.y += y;
-  if (player_pos.x < 0) {
-    player_pos.x = 0;
+  if (player_pos.x > 0 || x > 0) {
+    player_pos.x += x;
+  }
+  if (player_pos.y > 0 || y > 0) {
+    player_pos.y += y;
   }
   if (player_pos.x >= board_size.x) {
     player_pos.x = board_size.x - 1;
-  }
-  if (player_pos.y < 0) {
-    player_pos.y = 0;
   }
   if (player_pos.y >= board_size.y) {
     player_pos.y = board_size.y - 1;
@@ -295,7 +298,24 @@ void Game::move(int x, int y) {
 }
 
 void Game::attack() {
-  //kill goblin if at player_pos + player_facing
+  glm::uint attack_x = player_pos.x + player_facing.x;
+  glm::uint attack_y = player_pos.y + player_facing.y;
+  /*for (auto &goblin_pos : goblin_positions) {
+    if (goblin_pos.x == attack_x && goblin_pos.y == attack_y) {
+      //remove goblin
+      break; //only 1 goblin can occupy a position
+    }
+  }*/
+  //remove any goblins at the attacked position
+  //from https://stackoverflow.com/a/8628963
+  goblin_positions.erase(
+    std::remove_if(
+      goblin_positions.begin(),
+      goblin_positions.end(),
+      [attack_x, attack_y](glm::uvec2 const &goblin_pos) { return goblin_pos.x == attack_x && goblin_pos.y == attack_y; }
+    ),
+    goblin_positions.end()
+  );
   if (!check_win()) {
     next_turn();
   }
@@ -303,19 +323,63 @@ void Game::attack() {
 
 void Game::next_turn() {
   check_goblin_collisions();
-  //update all goblins
+  move_goblins();
   check_goblin_collisions();
 }
 
+void Game::move_goblins() {
+  for (auto &goblin_pos : goblin_positions) {
+  //  if player_pos.x < goblin.x: try to move (-1, 0) (continue if so)
+  //  if player_pos.x > goblin.x: try to move (1, 0) (continue if so)
+  //  if player_pos.y < goblin.y: try to move (0, -1) (continue if so)
+  //  if player_pos.y > goblin.y: try to move (0, 1) (continue if so)
+    if (player_pos.x < goblin_pos.x) {
+      if (space_free(goblin_pos.x - 1, goblin_pos.y)) {
+        goblin_pos.x -= 1;
+        continue;
+      }
+    }
+    if (player_pos.x > goblin_pos.x) {
+      if (space_free(goblin_pos.x + 1, goblin_pos.y)) {
+        goblin_pos.x += 1;
+        continue;
+      }
+    }
+    if (player_pos.y < goblin_pos.y) {
+      if (space_free(goblin_pos.x, goblin_pos.y - 1)) {
+        goblin_pos.y -= 1;
+        continue;
+      }
+    }
+    if (player_pos.y > goblin_pos.y) {
+      if (space_free(goblin_pos.x, goblin_pos.y + 1)) {
+        goblin_pos.y += 1;
+        continue;
+      }
+    }
+  }
+}
+
+bool Game::space_free(glm::uint x, glm::uint y) {
+  for (auto &goblin_pos : goblin_positions) {
+    if (goblin_pos.x == x && goblin_pos.y == y) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void Game::check_goblin_collisions() {
-  //for each goblin:
-  //  if goblin position == player_pos:
-  //    restart level
-  //    return
+  for (auto &goblin_pos : goblin_positions) {
+    if (goblin_pos.x == player_pos.x && goblin_pos.y == player_pos.y) {
+      restart();
+      return;
+    }
+  }
 }
 
 void Game::restart() {
-  //reset all goblins
+  //TODO reset all goblins
   player_pos.x = player_start_pos.x;
   player_pos.y = player_start_pos.y;
 
@@ -324,10 +388,11 @@ void Game::restart() {
 }
 
 bool Game::check_win() {
-  //if no goblins alive:
-  //generate new level
-  //return true
-  //else:
+  bool all_goblins_slain = goblin_positions.empty(); //TODO
+  if (all_goblins_slain) {
+    generate_level();
+    return true;
+  }
   return false;
 }
 
@@ -418,9 +483,10 @@ void Game::draw(glm::uvec2 drawable_size) {
 		glDrawArrays(GL_TRIANGLES, mesh.first, mesh.count);
 	};
 
+  //draw the board
 	for (uint32_t y = 0; y < board_size.y; ++y) {
 		for (uint32_t x = 0; x < board_size.x; ++x) {
-			draw_mesh(tile_mesh,
+			draw_mesh(bg_mesh,
 				glm::mat4(
 					1.0f, 0.0f, 0.0f, 0.0f,
 					0.0f, 1.0f, 0.0f, 0.0f,
@@ -428,7 +494,7 @@ void Game::draw(glm::uvec2 drawable_size) {
 					x+0.5f, y+0.5f,-0.5f, 1.0f
 				)
 			);
-			draw_mesh(*board_meshes[y*board_size.x+x],
+			/*draw_mesh(*board_meshes[y*board_size.x+x],
 				glm::mat4(
 					1.0f, 0.0f, 0.0f, 0.0f,
 					0.0f, 1.0f, 0.0f, 0.0f,
@@ -436,17 +502,23 @@ void Game::draw(glm::uvec2 drawable_size) {
 					x+0.5f, y+0.5f, 0.0f, 1.0f
 				)
 				* glm::mat4_cast(board_rotations[y*board_size.x+x])
-			);
+			);*/
 		}
 	}
-	draw_mesh(cursor_mesh,
-		glm::mat4(
-			1.0f, 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			player_pos.x+0.5f, player_pos.y+0.5f, 0.0f, 1.0f
-		)
-	);
+
+  //draw player
+  draw_mesh(player_mesh,
+    glm::mat4(
+      1.0f, 0.0f, 0.0f, 0.0f,
+      0.0f, 1.0f, 0.0f, 0.0f,
+      0.0f, 0.0f, 1.0f, 0.0f,
+      player_pos.x + 0.5f, player_pos.y + 0.5f, 0.0f, 1.0f
+    )
+  );
+
+  //TODO draw goblins
+
+	
 
 
 	glUseProgram(0);
