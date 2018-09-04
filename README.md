@@ -1,11 +1,13 @@
 # Game Information
-(Note: fill in this portion with information about your game.)
+A turn-based, grid-based puzzle game about slaying goblins in a dungeon.
 
-Title: (TODO: your game's title)
+The game takes place on a 6 by 6 tile grid populated with one player and several goblins. The player moves between tiles using the arrow keys, and can attack with the spacebar. Goblins move towards the player after the player moves or attacks, and the player must slay all the goblins and avoid being slain themselves.
 
-Author: (TODO: your name)
+Title: Dungeon Dilemma
 
-Design Document: [TODO: name of design document](TODO: link to design document)
+Author: Kai Kuehner
+
+Design Document: [Dungeon Dilemma Design Document](http://graphics.cs.cmu.edu/courses/15-466-f18/game0-designs/kkuehner/)
 
 Screen Shot:
 

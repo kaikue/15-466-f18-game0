@@ -212,6 +212,8 @@ Game::Game() {
 		board_meshes.emplace_back(meshes[mt()%meshes.size()]);
 		board_rotations.emplace_back(glm::quat());
 	}
+
+  generate_level();
 }
 
 Game::~Game() {
@@ -232,7 +234,7 @@ bool Game::handle_event(SDL_Event const &evt, glm::uvec2 window_size) {
 	if (evt.type == SDL_KEYDOWN && evt.key.repeat) {
 		return false;
 	}
-	//handle tracking the state of WSAD for roll control:
+	/*//handle tracking the state of WASD for roll control:
 	if (evt.type == SDL_KEYDOWN || evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
 			controls.roll_up = (evt.type == SDL_KEYDOWN);
@@ -247,36 +249,94 @@ bool Game::handle_event(SDL_Event const &evt, glm::uvec2 window_size) {
 			controls.roll_right = (evt.type == SDL_KEYDOWN);
 			return true;
 		}
-	}
-	//move cursor on L/R/U/D press:
+	}*/
+	//move with arrow keys, attack with space
 	if (evt.type == SDL_KEYDOWN && evt.key.repeat == 0) {
 		if (evt.key.keysym.scancode == SDL_SCANCODE_LEFT) {
-			if (cursor.x > 0) {
-				cursor.x -= 1;
-			}
+      move(-1, 0);
 			return true;
 		} else if (evt.key.keysym.scancode == SDL_SCANCODE_RIGHT) {
-			if (cursor.x + 1 < board_size.x) {
-				cursor.x += 1;
-			}
+      move(1, 0);
 			return true;
 		} else if (evt.key.keysym.scancode == SDL_SCANCODE_UP) {
-			if (cursor.y + 1 < board_size.y) {
-				cursor.y += 1;
-			}
+      move(0, 1);
 			return true;
 		} else if (evt.key.keysym.scancode == SDL_SCANCODE_DOWN) {
-			if (cursor.y > 0) {
-				cursor.y -= 1;
-			}
+      move(0, -1);
 			return true;
 		}
+    else if (evt.key.keysym.scancode == SDL_SCANCODE_SPACE) {
+      attack();
+      return true;
+    }
 	}
 	return false;
 }
 
+void Game::move(int x, int y) {
+  player_facing.x = x;
+  player_facing.y = y;
+
+  player_pos.x += x;
+  player_pos.y += y;
+  if (player_pos.x < 0) {
+    player_pos.x = 0;
+  }
+  if (player_pos.x >= board_size.x) {
+    player_pos.x = board_size.x - 1;
+  }
+  if (player_pos.y < 0) {
+    player_pos.y = 0;
+  }
+  if (player_pos.y >= board_size.y) {
+    player_pos.y = board_size.y - 1;
+  }
+  next_turn();
+}
+
+void Game::attack() {
+  //kill goblin if at player_pos + player_facing
+  if (!check_win()) {
+    next_turn();
+  }
+}
+
+void Game::next_turn() {
+  check_goblin_collisions();
+  //update all goblins
+  check_goblin_collisions();
+}
+
+void Game::check_goblin_collisions() {
+  //for each goblin:
+  //  if goblin position == player_pos:
+  //    restart level
+  //    return
+}
+
+void Game::restart() {
+  //reset all goblins
+  player_pos.x = player_start_pos.x;
+  player_pos.y = player_start_pos.y;
+
+  player_facing.x = player_start_facing.x;
+  player_facing.y = player_start_facing.y;
+}
+
+bool Game::check_win() {
+  //if no goblins alive:
+  //generate new level
+  //return true
+  //else:
+  return false;
+}
+
+void Game::generate_level() {
+  //TODO: see documentation
+}
+
 void Game::update(float elapsed) {
-	//if the roll keys are pressed, rotate everything on the same row or column as the cursor:
+	/*//if the roll keys are pressed, rotate everything on the same row or column as the cursor:
 	glm::quat dr = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	float amt = elapsed * 1.0f;
 	if (controls.roll_left) {
@@ -302,7 +362,7 @@ void Game::update(float elapsed) {
 				r = glm::normalize(dr * r);
 			}
 		}
-	}
+	}*/
 }
 
 void Game::draw(glm::uvec2 drawable_size) {
@@ -384,7 +444,7 @@ void Game::draw(glm::uvec2 drawable_size) {
 			1.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f, 0.0f,
-			cursor.x+0.5f, cursor.y+0.5f, 0.0f, 1.0f
+			player_pos.x+0.5f, player_pos.y+0.5f, 0.0f, 1.0f
 		)
 	);
 

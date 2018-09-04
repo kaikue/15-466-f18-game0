@@ -28,6 +28,21 @@ struct Game {
 	//draw is called after update:
 	void draw(glm::uvec2 drawable_size);
 
+  //game logic functions
+  void move(int x, int y);
+
+  void attack();
+
+  void next_turn();
+
+  void check_goblin_collisions();
+
+  void restart();
+
+  bool check_win();
+
+  void generate_level();
+
 	//------- opengl resources -------
 
 	//shader program that draws lit objects with vertex colors:
@@ -72,13 +87,8 @@ struct Game {
 	std::vector< Mesh const * > board_meshes;
 	std::vector< glm::quat > board_rotations;
 
-	glm::uvec2 cursor = glm::vec2(0,0);
-
-	struct {
-		bool roll_left = false;
-		bool roll_right = false;
-		bool roll_up = false;
-		bool roll_down = false;
-	} controls;
-
+	glm::uvec2 player_pos = glm::vec2(0,0);
+  glm::uvec2 player_facing = glm::vec2(1, 0);
+  glm::uvec2 player_start_pos = glm::vec2(0, 0);
+  glm::uvec2 player_start_facing = glm::vec2(1, 0);
 };
