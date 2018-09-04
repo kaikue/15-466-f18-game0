@@ -271,6 +271,10 @@ bool Game::handle_event(SDL_Event const &evt, glm::uvec2 window_size) {
       attack();
       return true;
     }
+    else if (evt.key.keysym.scancode == SDL_SCANCODE_R) {
+      generate_level();
+      return true;
+    }
 	}
 	return false;
 }
@@ -446,10 +450,13 @@ void Game::generate_level() {
         //generate goblin at facing
         glm::uvec2 goblin_pos = glm::uvec2(gen_player_pos.x + gen_facing.x, gen_player_pos.y + gen_facing.y);
         goblin_positions.push_back(goblin_pos);
-        printf("attack %d %d\n", gen_facing.x, gen_facing.y);
+        //printf("attack %d %d\n", gen_facing.x, gen_facing.y);
       }
       else {
         //move & update facing
+
+        //fails on the case where the player turns a corner- their facing isn't behind them anymore
+
         glm::ivec2 move_facing = get_random_facing(mt());
         while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, move_facing)) {
           move_facing = get_random_facing(mt()); //could make this more efficient by remembering tried facings
@@ -459,13 +466,9 @@ void Game::generate_level() {
         
         gen_player_pos = move_by(gen_player_pos, move_facing.x, move_facing.y);
 
-        //if (gen_player_pos.x != old_player_pos.x || gen_player_pos.y != old_player_pos.y) {
-        //  //only update facing if they actually moved
-
         //move by subtracting facing, since we're moving backwards
         gen_facing = glm::ivec2(move_facing.x * -1, move_facing.y * -1);
-        //}
-        printf("%d %d -> %d %d\n", old_player_pos.x, old_player_pos.y, gen_player_pos.x, gen_player_pos.y);
+        //printf("%d %d -> %d %d\n", old_player_pos.x, old_player_pos.y, gen_player_pos.x, gen_player_pos.y);
       }
 
     }

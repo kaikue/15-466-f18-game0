@@ -3,6 +3,8 @@ A turn-based, grid-based puzzle game about slaying goblins in a dungeon.
 
 The game takes place on a 6 by 6 tile grid populated with one player and several goblins. The player moves between tiles using the arrow keys, and can attack with the spacebar. Goblins move towards the player after the player moves or attacks, and the player must slay all the goblins and avoid being slain themselves.
 
+Press R to get a new level if yours is impossible. Not every level is solvable, sorry... I tried my best :(
+
 Assets modified from base0 asset files.
 
 Title: Dungeon Dilemma
@@ -19,9 +21,11 @@ Difficulties Encountered:
 
 I don't know C++ very well, so a lot of the code may be messy. I don't really understand the point of .hpp files yet; it seems like pointless copy-pasting that the computer should be doing. Learning Blender to edit models was also tricky.
 
+Getting a perfect, always-solvable level generation algorithm was also difficult.
+
 Good Code:
 
-I am quite happy with my level generation algorithm. It produces generally fun, always (I think) solvable levels without being too difficult to implement.
+I managed to juggle signed (facing directions) and unsigned (board positions) values without mixing them up too much.
 
 # Using This Base Code
 
