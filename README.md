@@ -3,6 +3,8 @@ A turn-based, grid-based puzzle game about slaying goblins in a dungeon.
 
 The game takes place on a 6 by 6 tile grid populated with one player and several goblins. The player moves between tiles using the arrow keys, and can attack with the spacebar. Goblins move towards the player after the player moves or attacks, and the player must slay all the goblins and avoid being slain themselves.
 
+Assets modified from base0 asset files.
+
 Title: Dungeon Dilemma
 
 Author: Kai Kuehner
@@ -19,7 +21,7 @@ I don't know C++ very well, so a lot of the code may be messy. I don't really un
 
 Good Code:
 
-I am quite happy with my level generation algorithm, and it produces generally fun, always (I think) solvable levels without being too difficult to implement.
+I am quite happy with my level generation algorithm. It produces generally fun, always (I think) solvable levels without being too difficult to implement.
 
 # Using This Base Code
 

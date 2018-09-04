@@ -174,11 +174,10 @@ Game::Game() {
 			return f->second;
 		};
 
-    //TODO
     bg_mesh = lookup("Tile");
-    player_mesh = lookup("Doll");
-    goblin_mesh = lookup("Egg");
-    target_mesh = lookup("Cube");
+    player_mesh = lookup("Player");
+    goblin_mesh = lookup("Goblin");
+    target_mesh = lookup("Target");
 	}
 
 	{ //create vertex array object to hold the map from the mesh vertex buffer to shader program attributes:
@@ -483,8 +482,8 @@ glm::ivec2 Game::get_goblin_move(glm::uvec2 g_pos, glm::uvec2 p_pos) {
 }
 
 bool Game::is_valid_space(glm::uint px, glm::uint py, glm::ivec2 facing) {
-  return (px > 0 || facing.x > 0) &&
-         (py > 0 || facing.y > 0) &&
+  return (px > 0 || facing.x >= 0) &&
+         (py > 0 || facing.y >= 0) &&
          (px + facing.x < board_size.x) &&
          (py + facing.y < board_size.y);
 }
@@ -627,7 +626,7 @@ void Game::draw(glm::uvec2 drawable_size) {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        player_pos.x + player_facing.x + 0.5f, player_pos.y + player_facing.y + 0.5f, 0.0f, 1.0f
+        player_pos.x + player_facing.x + 0.5f, player_pos.y + player_facing.y + 0.5f, -0.4f, 1.0f
       )
     );
   }
