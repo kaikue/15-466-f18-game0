@@ -414,8 +414,10 @@ void Game::generate_level() {
 
   //random valid starting facing
   glm::ivec2 gen_facing = get_random_facing(mt());
-  while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, gen_facing)) {
+  glm::ivec2 move_facing = glm::ivec2(gen_facing.x * -1, gen_facing.y * -1);
+  while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, move_facing)) {
     gen_facing = get_random_facing(mt()); //could make this more efficient by remembering tried facings
+    move_facing = glm::ivec2(gen_facing.x * -1, gen_facing.y * -1);
   }
 
   goblin_positions = std::vector<glm::uvec2>();
@@ -455,20 +457,17 @@ void Game::generate_level() {
       else {
         //move & update facing
 
-        //fails on the case where the player turns a corner- their facing isn't behind them anymore
-
-        glm::ivec2 move_facing = get_random_facing(mt());
-        while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, move_facing)) {
-          move_facing = get_random_facing(mt()); //could make this more efficient by remembering tried facings
-        }
-        
         glm::uvec2 old_player_pos = gen_player_pos;
-        
-        gen_player_pos = move_by(gen_player_pos, move_facing.x, move_facing.y);
-
         //move by subtracting facing, since we're moving backwards
-        gen_facing = glm::ivec2(move_facing.x * -1, move_facing.y * -1);
-        //printf("%d %d -> %d %d\n", old_player_pos.x, old_player_pos.y, gen_player_pos.x, gen_player_pos.y);
+        gen_player_pos = move_by(gen_player_pos, -gen_facing.x, -gen_facing.y);
+        //printf("%d %d -> %d %d (%d %d) \n", old_player_pos.x, old_player_pos.y, gen_player_pos.x, gen_player_pos.y, gen_facing.x, gen_facing.y);
+
+        gen_facing = get_random_facing(mt());
+        move_facing = glm::ivec2(gen_facing.x * -1, gen_facing.y * -1);
+        while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, move_facing)) {
+          gen_facing = get_random_facing(mt()); //could make this more efficient by remembering tried facings
+          move_facing = glm::ivec2(gen_facing.x * -1, gen_facing.y * -1);
+        }
       }
 
     }

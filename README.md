@@ -3,7 +3,7 @@ A turn-based, grid-based puzzle game about slaying goblins in a dungeon.
 
 The game takes place on a 6 by 6 tile grid populated with one player and several goblins. The player moves between tiles using the arrow keys, and can attack with the spacebar. Goblins move towards the player after the player moves or attacks, and the player must slay all the goblins and avoid being slain themselves.
 
-Press R to get a new level if yours is impossible. Not every level is solvable, sorry... I tried my best :(
+Press R to get a new level if yours is impossible, which may occur in rare cases.
 
 Assets modified from base0 asset files.
 
