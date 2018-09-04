@@ -300,12 +300,6 @@ void Game::move(int x, int y) {
 void Game::attack() {
   glm::uint attack_x = player_pos.x + player_facing.x;
   glm::uint attack_y = player_pos.y + player_facing.y;
-  /*for (auto &goblin_pos : goblin_positions) {
-    if (goblin_pos.x == attack_x && goblin_pos.y == attack_y) {
-      //remove goblin
-      break; //only 1 goblin can occupy a position
-    }
-  }*/
   //remove any goblins at the attacked position
   //from https://stackoverflow.com/a/8628963
   goblin_positions.erase(
@@ -329,10 +323,6 @@ void Game::next_turn() {
 
 void Game::move_goblins() {
   for (auto &goblin_pos : goblin_positions) {
-  //  if player_pos.x < goblin.x: try to move (-1, 0) (continue if so)
-  //  if player_pos.x > goblin.x: try to move (1, 0) (continue if so)
-  //  if player_pos.y < goblin.y: try to move (0, -1) (continue if so)
-  //  if player_pos.y > goblin.y: try to move (0, 1) (continue if so)
     if (player_pos.x < goblin_pos.x) {
       if (space_free(goblin_pos.x - 1, goblin_pos.y)) {
         goblin_pos.x -= 1;
@@ -379,7 +369,8 @@ void Game::check_goblin_collisions() {
 }
 
 void Game::restart() {
-  //TODO reset all goblins
+  goblin_positions = goblin_start_positions; //TODO: does this work or do i need to really copy?
+
   player_pos.x = player_start_pos.x;
   player_pos.y = player_start_pos.y;
 
@@ -388,7 +379,7 @@ void Game::restart() {
 }
 
 bool Game::check_win() {
-  bool all_goblins_slain = goblin_positions.empty(); //TODO
+  bool all_goblins_slain = goblin_positions.empty();
   if (all_goblins_slain) {
     generate_level();
     return true;
@@ -398,6 +389,16 @@ bool Game::check_win() {
 
 void Game::generate_level() {
   //TODO: see documentation
+
+  goblin_start_positions = std::vector<glm::uvec2>();
+  goblin_start_positions.push_back(glm::uvec2(5, 0));
+  goblin_start_positions.push_back(glm::uvec2(5, 5));
+  goblin_start_positions.push_back(glm::uvec2(4, 5));
+  goblin_start_positions.push_back(glm::uvec2(0, 5));
+
+  player_start_pos = glm::uvec2(0, 0);
+  player_start_facing = glm::uvec2(1, 0);
+  restart();
 }
 
 void Game::update(float elapsed) {
@@ -516,11 +517,18 @@ void Game::draw(glm::uvec2 drawable_size) {
     )
   );
 
-  //TODO draw goblins
-
+  //draw goblins
+  for (auto &goblin_pos : goblin_positions) {
+    draw_mesh(goblin_mesh,
+      glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        goblin_pos.x + 0.5f, goblin_pos.y + 0.5f, 0.0f, 1.0f
+      )
+    );
+  }
 	
-
-
 	glUseProgram(0);
 
 	GL_ERRORS();
