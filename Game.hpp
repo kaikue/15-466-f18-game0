@@ -38,7 +38,7 @@ struct Game {
 
   void next_turn();
 
-  void check_goblin_collisions();
+  bool check_goblin_collisions();
 
   void move_goblins();
 

@@ -325,9 +325,10 @@ void Game::attack() {
 }
 
 void Game::next_turn() {
-  check_goblin_collisions();
-  move_goblins();
-  check_goblin_collisions();
+  if (!check_goblin_collisions()) {
+    move_goblins();
+    check_goblin_collisions();
+  }
 }
 
 void Game::move_goblins() {
@@ -368,14 +369,15 @@ bool Game::space_free(glm::uint x, glm::uint y) {
   return true;
 }
 
-void Game::check_goblin_collisions() {
+bool Game::check_goblin_collisions() {
   for (auto &goblin_pos : goblin_positions) {
     if (goblin_pos.x == player_pos.x && goblin_pos.y == player_pos.y) {
       printf("You were slain...\n");
       restart();
-      return;
+      return true;
     }
   }
+  return false;
 }
 
 void Game::restart() {
@@ -444,16 +446,28 @@ void Game::generate_level() {
         //generate goblin at facing
         glm::uvec2 goblin_pos = glm::uvec2(gen_player_pos.x + gen_facing.x, gen_player_pos.y + gen_facing.y);
         goblin_positions.push_back(goblin_pos);
+        printf("attack %d %d\n", gen_facing.x, gen_facing.y);
       }
       else {
         //move & update facing
         glm::ivec2 move_facing = get_random_facing(mt());
+        while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, move_facing)) {
+          move_facing = get_random_facing(mt()); //could make this more efficient by remembering tried facings
+        }
+        
+        glm::uvec2 old_player_pos = gen_player_pos;
+        
+        gen_player_pos = move_by(gen_player_pos, move_facing.x, move_facing.y);
+
+        //if (gen_player_pos.x != old_player_pos.x || gen_player_pos.y != old_player_pos.y) {
+        //  //only update facing if they actually moved
+
         //move by subtracting facing, since we're moving backwards
-        gen_player_pos = move_by(gen_player_pos, -move_facing.x, -move_facing.y);
-        gen_facing = move_facing;
+        gen_facing = glm::ivec2(move_facing.x * -1, move_facing.y * -1);
+        //}
+        printf("%d %d -> %d %d\n", old_player_pos.x, old_player_pos.y, gen_player_pos.x, gen_player_pos.y);
       }
 
-      printf("%d %d\n", gen_player_pos.x, gen_player_pos.y);
     }
 
   }
@@ -463,6 +477,7 @@ void Game::generate_level() {
 
   goblin_start_positions = goblin_positions;
   player_start_pos = gen_player_pos;
+  //player_start_facing = glm::ivec2(gen_facing.x * -1, gen_facing.y * -1);
   player_start_facing = gen_facing;
   restart();
 }
