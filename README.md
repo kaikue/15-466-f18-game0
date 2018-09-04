@@ -15,11 +15,11 @@ Screen Shot:
 
 Difficulties Encountered:
 
-TODO: write several sentences about any difficulties you may have encountered in creating the game.
+I don't know C++ very well, so a lot of the code may be messy. I don't really understand the point of .hpp files yet; it seems like pointless copy-pasting that the computer should be doing. Learning Blender to edit models was also tricky.
 
 Good Code:
 
-TODO: write a sentence or two about any code you think you did particularly well.
+I am quite happy with my level generation algorithm, and it produces generally fun, always (I think) solvable levels without being too difficult to implement.
 
 # Using This Base Code
 

@@ -7,6 +7,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <vector>
+#include <random>
 
 // The 'Game' struct holds all of the game-relevant state,
 // and is called by the main loop.
@@ -29,6 +30,8 @@ struct Game {
 	void draw(glm::uvec2 drawable_size);
 
   //game logic functions
+  glm::uvec2 move_by(glm::uvec2 pos, int fx, int fy);
+
   void move(int x, int y);
 
   void attack();
@@ -46,6 +49,12 @@ struct Game {
   bool check_win();
 
   void generate_level();
+
+  glm::ivec2 get_goblin_move(glm::uvec2 g_pos, glm::uvec2 p_pos);
+
+  bool is_valid_space(glm::uint px, glm::uint py, glm::ivec2 facing);
+
+  glm::ivec2 get_random_facing(unsigned int seed);
 
 	//------- opengl resources -------
 
@@ -77,14 +86,9 @@ struct Game {
 		GLsizei count = 0;
 	};
 
-	Mesh tile_mesh;
-	Mesh cursor_mesh;
-	Mesh doll_mesh;
-	Mesh egg_mesh;
-	Mesh cube_mesh;
-
   Mesh player_mesh;
   Mesh goblin_mesh;
+  Mesh target_mesh;
   Mesh bg_mesh;
 
 	GLuint meshes_for_simple_shading_vao = -1U; //vertex array object that describes how to connect the meshes_vbo to the simple_shading_program
@@ -95,11 +99,13 @@ struct Game {
 	std::vector< Mesh const * > board_meshes;
 	std::vector< glm::quat > board_rotations;
 
-	glm::uvec2 player_pos = glm::vec2(0, 0);
-  glm::uvec2 player_facing = glm::vec2(1, 0);
-  glm::uvec2 player_start_pos = glm::vec2(0, 0);
-  glm::uvec2 player_start_facing = glm::vec2(1, 0);
+	glm::uvec2 player_pos = glm::uvec2(0, 0);
+  glm::ivec2 player_facing = glm::ivec2(1, 0);
+  glm::uvec2 player_start_pos = glm::uvec2(0, 0);
+  glm::ivec2 player_start_facing = glm::ivec2(1, 0);
 
   std::vector< glm::uvec2 > goblin_positions;
   std::vector< glm::uvec2 > goblin_start_positions;
+
+  std::mt19937 mt;
 };

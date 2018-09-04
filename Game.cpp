@@ -173,16 +173,12 @@ Game::Game() {
 			}
 			return f->second;
 		};
-		tile_mesh = lookup("Tile");
-		cursor_mesh = lookup("Cursor");
-		doll_mesh = lookup("Doll");
-		egg_mesh = lookup("Egg");
-		cube_mesh = lookup("Cube");
 
     //TODO
     bg_mesh = lookup("Tile");
     player_mesh = lookup("Doll");
     goblin_mesh = lookup("Egg");
+    target_mesh = lookup("Cube");
 	}
 
 	{ //create vertex array object to hold the map from the mesh vertex buffer to shader program attributes:
@@ -207,7 +203,7 @@ Game::Game() {
 
 	//----------------
 	//set up game board with meshes and rolls:
-	board_meshes.reserve(board_size.x * board_size.y);
+  /*board_meshes.reserve(board_size.x * board_size.y);
 	board_rotations.reserve(board_size.x * board_size.y);
 	std::mt19937 mt(0xbead1234);
 
@@ -216,8 +212,9 @@ Game::Game() {
 	for (uint32_t i = 0; i < board_size.x * board_size.y; ++i) {
 		board_meshes.emplace_back(meshes[mt()%meshes.size()]);
 		board_rotations.emplace_back(glm::quat());
-	}
+	}*/
 
+  mt = std::mt19937(0x12345678);
   generate_level();
 }
 
@@ -278,26 +275,38 @@ bool Game::handle_event(SDL_Event const &evt, glm::uvec2 window_size) {
 	return false;
 }
 
+glm::uvec2 Game::move_by(glm::uvec2 pos, int x, int y) {
+  if (pos.x > 0 || x > 0) {
+    pos.x += x;
+  }
+  if (pos.y > 0 || y > 0) {
+    pos.y += y;
+  }
+  if (pos.x >= board_size.x) {
+    pos.x = board_size.x - 1;
+  }
+  if (pos.y >= board_size.y) {
+    pos.y = board_size.y - 1;
+  }
+  return pos;
+}
+
 void Game::move(int x, int y) {
   player_facing.x = x;
   player_facing.y = y;
 
-  if (player_pos.x > 0 || x > 0) {
-    player_pos.x += x;
-  }
-  if (player_pos.y > 0 || y > 0) {
-    player_pos.y += y;
-  }
-  if (player_pos.x >= board_size.x) {
-    player_pos.x = board_size.x - 1;
-  }
-  if (player_pos.y >= board_size.y) {
-    player_pos.y = board_size.y - 1;
-  }
+  player_pos = move_by(player_pos, x, y);
+  
   next_turn();
 }
 
 void Game::attack() {
+  if (!is_valid_space(player_pos.x, player_pos.y, player_facing)) {
+    //attacked offscreen
+    next_turn();
+    return;
+  }
+
   glm::uint attack_x = player_pos.x + player_facing.x;
   glm::uint attack_y = player_pos.y + player_facing.y;
   //remove any goblins at the attacked position
@@ -362,6 +371,7 @@ bool Game::space_free(glm::uint x, glm::uint y) {
 void Game::check_goblin_collisions() {
   for (auto &goblin_pos : goblin_positions) {
     if (goblin_pos.x == player_pos.x && goblin_pos.y == player_pos.y) {
+      printf("You were slain...\n");
       restart();
       return;
     }
@@ -369,7 +379,7 @@ void Game::check_goblin_collisions() {
 }
 
 void Game::restart() {
-  goblin_positions = goblin_start_positions; //TODO: does this work or do i need to really copy?
+  goblin_positions = goblin_start_positions;
 
   player_pos.x = player_start_pos.x;
   player_pos.y = player_start_pos.y;
@@ -381,6 +391,7 @@ void Game::restart() {
 bool Game::check_win() {
   bool all_goblins_slain = goblin_positions.empty();
   if (all_goblins_slain) {
+    printf("Level complete!\n");
     generate_level();
     return true;
   }
@@ -388,17 +399,109 @@ bool Game::check_win() {
 }
 
 void Game::generate_level() {
-  //TODO: see documentation
+  int goblin_chance = 4; //1 in x chance to spawn a goblin per turn
 
-  goblin_start_positions = std::vector<glm::uvec2>();
-  goblin_start_positions.push_back(glm::uvec2(5, 0));
-  goblin_start_positions.push_back(glm::uvec2(5, 5));
-  goblin_start_positions.push_back(glm::uvec2(4, 5));
-  goblin_start_positions.push_back(glm::uvec2(0, 5));
+  //random starting spot
+  glm::uint gen_player_x = mt() % board_size.x;
+  glm::uint gen_player_y = mt() % board_size.y;
+  glm::uvec2 gen_player_pos = glm::uvec2(gen_player_x, gen_player_y);
 
-  player_start_pos = glm::uvec2(0, 0);
-  player_start_facing = glm::uvec2(1, 0);
+  //random valid starting facing
+  glm::ivec2 gen_facing = get_random_facing(mt());
+  while (!is_valid_space(gen_player_pos.x, gen_player_pos.y, gen_facing)) {
+    gen_facing = get_random_facing(mt()); //could make this more efficient by remembering tried facings
+  }
+
+  goblin_positions = std::vector<glm::uvec2>();
+
+  bool done = false;
+  while (!done) {
+    std::vector<glm::ivec2> goblin_moves = std::vector<glm::ivec2>();
+    for (auto &goblin_pos : goblin_positions) {
+      //move goblin away from the player if possible
+      glm::ivec2 goblin_move = get_goblin_move(goblin_pos, gen_player_pos);
+
+      if (goblin_move.x == 0 && goblin_move.y == 0) //goblin is stuck this turn
+      {
+        done = true;
+        //cancel all pending moves
+        break;
+      }
+
+      goblin_moves.push_back(goblin_move);
+    }
+
+    if (!done) {
+      //make all pending moves
+      assert((goblin_positions.size() == goblin_moves.size()) && "Each goblin should move on a turn");
+      for (uint32_t i = 0; i != goblin_positions.size(); ++i) {
+        glm::ivec2 move = goblin_moves[i];
+        goblin_positions[i].x += move.x;
+        goblin_positions[i].y += move.y;
+      }
+      
+      if (is_valid_space(gen_player_pos.x, gen_player_pos.y, gen_facing) && (mt() % goblin_chance == 0)) {
+        //generate goblin at facing
+        glm::uvec2 goblin_pos = glm::uvec2(gen_player_pos.x + gen_facing.x, gen_player_pos.y + gen_facing.y);
+        goblin_positions.push_back(goblin_pos);
+      }
+      else {
+        //move & update facing
+        glm::ivec2 move_facing = get_random_facing(mt());
+        //move by subtracting facing, since we're moving backwards
+        gen_player_pos = move_by(gen_player_pos, -move_facing.x, -move_facing.y);
+        gen_facing = move_facing;
+      }
+    }
+  }
+
+  //move goblins in reverse order they were created to ensure consistency (in known solution, first created = last killed)
+  std::reverse(goblin_positions.begin(), goblin_positions.end());
+
+  goblin_start_positions = goblin_positions;
+  player_start_pos = gen_player_pos;
+  player_start_facing = gen_facing;
   restart();
+}
+
+glm::ivec2 Game::get_goblin_move(glm::uvec2 g_pos, glm::uvec2 p_pos) {
+  if (g_pos.x <= p_pos.x && g_pos.x > 0 && space_free(g_pos.x - 1, g_pos.y)) {
+    return glm::ivec2(-1, 0);
+  }
+  if (g_pos.x > p_pos.x && g_pos.x < board_size.x - 1 && space_free(g_pos.x + 1, g_pos.y)) {
+    return glm::ivec2(1, 0);
+  }
+  if (g_pos.y <= p_pos.y && g_pos.y > 0 && space_free(g_pos.x, g_pos.y - 1)) {
+    return glm::ivec2(0, -1);
+  }
+  if (g_pos.y > p_pos.y && g_pos.y < board_size.y - 1 && space_free(g_pos.x, g_pos.y + 1)) {
+    return glm::ivec2(0, 1);
+  }
+
+  //no valid move
+  return glm::ivec2(0, 0);
+}
+
+bool Game::is_valid_space(glm::uint px, glm::uint py, glm::ivec2 facing) {
+  return (px > 0 || facing.x > 0) &&
+         (py > 0 || facing.y > 0) &&
+         (px + facing.x < board_size.x) &&
+         (py + facing.y < board_size.y);
+}
+
+glm::ivec2 Game::get_random_facing(unsigned int seed) {
+  int i = seed % 4;
+  if (i == 0) {
+    return glm::ivec2(-1, 0);
+  }
+  if (i == 1) {
+    return glm::ivec2(1, 0);
+  }
+  if (i == 2) {
+    return glm::ivec2(0, -1);
+  }
+  assert((i == 3) && "Should be only 4 options for facing");
+  return glm::ivec2(0, 1);
 }
 
 void Game::update(float elapsed) {
@@ -516,6 +619,18 @@ void Game::draw(glm::uvec2 drawable_size) {
       player_pos.x + 0.5f, player_pos.y + 0.5f, 0.0f, 1.0f
     )
   );
+
+  //draw target
+  if (is_valid_space(player_pos.x, player_pos.y, player_facing)) {
+    draw_mesh(target_mesh,
+      glm::mat4(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        player_pos.x + player_facing.x + 0.5f, player_pos.y + player_facing.y + 0.5f, 0.0f, 1.0f
+      )
+    );
+  }
 
   //draw goblins
   for (auto &goblin_pos : goblin_positions) {
